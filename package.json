@@ -26,7 +26,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest",
-    "predeploy": "npm run build && node ./scripts/generate-404.js",
+    "predeploy": "npm run build && node ./scripts/generate-404.cjs",
     "deploy": "gh-pages -d dist"
   },
   "eslintConfig": {
