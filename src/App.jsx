@@ -1,10 +1,22 @@
 import { useState, useEffect } from 'react';
+import { HashRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import './App.css';
 import Dashboard from './components/Dashboard';
 import PlayerManagement from './components/PlayerManagement';
 import NewAssessment from './components/NewAssessment';
 import Reports from './components/Reports';
 import ExportData from './components/ExportData';
+import { 
+  getPlayers, 
+  getAssessments, 
+  savePlayer, 
+  deletePlayer, 
+  saveAssessment, 
+  deleteAssessmentsForPlayer,
+  importData,
+  exportData,
+  supabase 
+} from './utils/supabaseClient';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -13,50 +25,107 @@ function App() {
     assessments: []
   });
 
-  // Load data from localStorage on mount
+  // Load data from Supabase on mount
   useEffect(() => {
-    const savedData = localStorage.getItem('hockeyTrackerData');
-    if (savedData) {
-      setAppData(JSON.parse(savedData));
-    }
+    const loadData = async () => {
+      try {
+        const [players, assessments] = await Promise.all([
+          getPlayers(),
+          getAssessments()
+        ]);
+        setAppData({ players, assessments });
+      } catch (error) {
+        console.error('Error loading data:', error);
+        alert('Error loading data. Please check your connection.');
+      }
+    };
+    loadData();
+
+    // Set up real-time subscriptions
+    const playersSubscription = supabase
+      .channel('custom-all-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'players' },
+        () => {
+          loadData(); // Reload data when changes occur
+        }
+      )
+      .subscribe();
+
+    const assessmentsSubscription = supabase
+      .channel('custom-all-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'assessments' },
+        () => {
+          loadData(); // Reload data when changes occur
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscriptions
+    return () => {
+      playersSubscription.unsubscribe();
+      assessmentsSubscription.unsubscribe();
+    };
   }, []);
 
-  // Save data to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem('hockeyTrackerData', JSON.stringify(appData));
-  }, [appData]);
-
-  const handleAddPlayer = (newPlayer) => {
-    setAppData(prev => ({
-      ...prev,
-      players: [...prev.players, newPlayer]
-    }));
+  const handleAddPlayer = async (newPlayer) => {
+    try {
+      await savePlayer(newPlayer);
+      // Data will be updated via real-time subscription
+    } catch (error) {
+      console.error('Error saving player:', error);
+      alert('Failed to save player. Please try again.');
+    }
   };
 
-  const handleDeletePlayer = (playerId) => {
+  const handleDeletePlayer = async (playerId) => {
     if (!window.confirm('Are you sure you want to delete this player and all their assessments?')) {
       return;
     }
-    setAppData(prev => ({
-      players: prev.players.filter(p => p.id !== playerId),
-      assessments: prev.assessments.filter(a => a.playerId !== playerId)
-    }));
+    try {
+      await deletePlayer(playerId);
+      // Cascade delete will handle assessments, and data will be updated via real-time subscription
+    } catch (error) {
+      console.error('Error deleting player:', error);
+      alert('Failed to delete player. Please try again.');
+    }
   };
 
-  const handleSaveAssessment = (assessment) => {
-    setAppData(prev => ({
-      ...prev,
-      assessments: [...prev.assessments, assessment]
-    }));
-    setActiveTab('dashboard');
+  const handleSaveAssessment = async (assessment) => {
+    try {
+      await saveAssessment(assessment);
+      setActiveTab('dashboard');
+      // Data will be updated via real-time subscription
+    } catch (error) {
+      console.error('Error saving assessment:', error);
+      alert('Failed to save assessment. Please try again.');
+    }
   };
 
-  const handleImportData = (importedData) => {
-    setAppData(importedData);
+  const handleImportData = async (importedData) => {
+    try {
+      await importData(importedData);
+      // Data will be updated via real-time subscription
+    } catch (error) {
+      console.error('Error importing data:', error);
+      alert('Failed to import data. Please try again.');
+    }
   };
 
-  const handleClearData = () => {
-    setAppData({ players: [], assessments: [] });
+  const handleClearData = async () => {
+    if (!window.confirm('⚠️ This will permanently delete ALL data. This cannot be undone. Are you sure?')) {
+      return;
+    }
+    try {
+      await importData({ players: [], assessments: [] });
+      // Data will be updated via real-time subscription
+    } catch (error) {
+      console.error('Error clearing data:', error);
+      alert('Failed to clear data. Please try again.');
+    }
   };
 
   return (
@@ -68,71 +137,24 @@ function App() {
         </div>
 
         <div className="nav-tabs">
-          <button 
-            className={`nav-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
-            onClick={() => setActiveTab('dashboard')}
-          >
-            Dashboard
-          </button>
-          <button 
-            className={`nav-tab ${activeTab === 'players' ? 'active' : ''}`}
-            onClick={() => setActiveTab('players')}
-          >
-            Players
-          </button>
-          <button 
-            className={`nav-tab ${activeTab === 'assess' ? 'active' : ''}`}
-            onClick={() => setActiveTab('assess')}
-          >
-            New Assessment
-          </button>
-          <button 
-            className={`nav-tab ${activeTab === 'reports' ? 'active' : ''}`}
-            onClick={() => setActiveTab('reports')}
-          >
-            Reports
-          </button>
-          <button 
-            className={`nav-tab ${activeTab === 'export' ? 'active' : ''}`}
-            onClick={() => setActiveTab('export')}
-          >
-            Export Data
-          </button>
+          <Link className="nav-tab" to="/">Dashboard</Link>
+          <Link className="nav-tab" to="/players">Players</Link>
+          <Link className="nav-tab" to="/assess">New Assessment</Link>
+          <Link className="nav-tab" to="/reports">Reports</Link>
+          <Link className="nav-tab" to="/export">Export Data</Link>
         </div>
 
         <div className="content-section active">
-          {activeTab === 'dashboard' && (
-            <Dashboard 
-              players={appData.players}
-              assessments={appData.assessments}
-            />
-          )}
-          {activeTab === 'players' && (
-            <PlayerManagement 
-              players={appData.players}
+          <HashRouter>
+            <AppRoutes 
+              appData={appData}
               onAddPlayer={handleAddPlayer}
               onDeletePlayer={handleDeletePlayer}
-            />
-          )}
-          {activeTab === 'assess' && (
-            <NewAssessment 
-              players={appData.players}
               onSaveAssessment={handleSaveAssessment}
+              onImportData={handleImportData}
+              onClearData={handleClearData}
             />
-          )}
-          {activeTab === 'reports' && (
-            <Reports 
-              players={appData.players}
-              assessments={appData.assessments}
-            />
-          )}
-          {activeTab === 'export' && (
-            <ExportData 
-              appData={appData}
-              onImport={handleImportData}
-              onClear={handleClearData}
-            />
-          )}
+          </HashRouter>
         </div>
       </div>
     </div>
@@ -140,3 +162,17 @@ function App() {
 }
 
 export default App;
+
+function AppRoutes({ appData, onAddPlayer, onDeletePlayer, onSaveAssessment, onImportData, onClearData }) {
+  return (
+    <Routes>
+      <Route path="/" element={<Dashboard players={appData.players} assessments={appData.assessments} />} />
+      <Route path="/players" element={<PlayerManagement players={appData.players} onAddPlayer={onAddPlayer} onDeletePlayer={onDeletePlayer} />} />
+      <Route path="/assess" element={<NewAssessment players={appData.players} onSaveAssessment={onSaveAssessment} />} />
+      <Route path="/reports" element={<Reports players={appData.players} assessments={appData.assessments} />} />
+      <Route path="/export" element={<ExportData onImport={onImportData} onClear={onClearData} />} />
+      {/* Catch-all route to redirect to dashboard */}
+      <Route path="*" element={<Dashboard players={appData.players} assessments={appData.assessments} />} />
+    </Routes>
+  );
+}

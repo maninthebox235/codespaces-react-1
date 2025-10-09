@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PlayerProgress from './PlayerProgress';
 
 const Reports = ({ players, assessments }) => {
   const [selectedPlayer, setSelectedPlayer] = useState('');
@@ -107,7 +108,18 @@ const Reports = ({ players, assessments }) => {
         </select>
       </div>
 
-      {generateReport()}
+      {selectedPlayer && (
+        <div>
+          <PlayerProgress 
+            playerId={selectedPlayer} 
+            assessments={assessments} 
+            players={players}
+          />
+          <div style={{ marginTop: '40px' }}>
+            {generateReport()}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

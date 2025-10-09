@@ -68,3 +68,15 @@ This section has moved here: [https://vitejs.dev/guide/build.html](https://vitej
 ### Troubleshooting
 
 This section has moved here: [https://vitejs.dev/guide/troubleshooting.html](https://vitejs.dev/guide/troubleshooting.html)
+
+## CI Deploy (GitHub Actions)
+
+This repository contains a GitHub Actions workflow `.github/workflows/deploy.yml` that builds the app and publishes `dist` to the `gh-pages` branch when you push to `main` or run the workflow manually.
+
+To use it securely, add the following repository secrets in GitHub: Settings → Secrets and variables → Actions → New repository secret
+
+- `VITE_SUPABASE_URL` — your Supabase project URL (e.g. `https://<project-ref>.supabase.co`)
+- `VITE_SUPABASE_ANON_KEY` — your Supabase anon/public key
+
+After setting these secrets, push to `main` or trigger the workflow from the Actions tab. The workflow will build with the secrets as env vars and publish the resulting `dist` to the `gh-pages` branch.
+

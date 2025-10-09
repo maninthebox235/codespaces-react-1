@@ -18,6 +18,29 @@ const NewAssessment = ({ players, onSaveAssessment }) => {
       reboundControl: '',
       lateralMovement: ''
     },
+    skill_ratings: {
+      skating: {
+        speed: 5,
+        agility: 5,
+        acceleration: 5,
+        balance: 5
+      },
+      stickhandling: {
+        control: 5,
+        protection: 5,
+        deking: 5
+      },
+      shooting: {
+        accuracy: 5,
+        power: 5,
+        release: 5
+      },
+      gameplay: {
+        hockey_sense: 5,
+        positioning: 5,
+        teamwork: 5
+      }
+    },
     notes: {
       strengths: '',
       devAreas: '',
@@ -234,6 +257,42 @@ const NewAssessment = ({ players, onSaveAssessment }) => {
               />
             </div>
           </div>
+
+          <h3>Skill Ratings</h3>
+          {Object.entries(assessmentData.skill_ratings).map(([category, skills]) => (
+            <div key={category} className="skill-category">
+              <h4>{category.charAt(0).toUpperCase() + category.slice(1)}</h4>
+              <div className="assessment-grid">
+                {Object.entries(skills).map(([skill, value]) => (
+                  <div key={skill} className="metric-card">
+                    <h4>{skill.charAt(0).toUpperCase() + skill.slice(1)}</h4>
+                    <input
+                      type="range"
+                      min="0"
+                      max="10"
+                      step="0.5"
+                      value={value}
+                      onChange={(e) => {
+                        setAssessmentData(prev => ({
+                          ...prev,
+                          skill_ratings: {
+                            ...prev.skill_ratings,
+                            [category]: {
+                              ...prev.skill_ratings[category],
+                              [skill]: parseFloat(e.target.value)
+                            }
+                          }
+                        }));
+                      }}
+                    />
+                    <div style={{ textAlign: 'center', marginTop: '5px' }}>
+                      {value}/10
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
 
           <h3>Notes & Goals</h3>
           <div className="form-group">
