@@ -5,10 +5,14 @@
   "homepage": "https://maninthebox235.github.io/codespaces-react-1",
   "type": "module",
   "dependencies": {
+    "@supabase/supabase-js": "^2.74.0",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^14.4.3",
+    "chart.js": "^4.5.0",
+    "idb": "^8.0.3",
     "react": "^18.2.0",
+    "react-chartjs-2": "^5.3.0",
     "react-dom": "^18.2.0",
     "web-vitals": "^3.1.0"
   },
@@ -22,7 +26,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest",
-    "predeploy": "npm run build",
+    "predeploy": "npm run build && node ./scripts/generate-404.js",
     "deploy": "gh-pages -d dist"
   },
   "eslintConfig": {

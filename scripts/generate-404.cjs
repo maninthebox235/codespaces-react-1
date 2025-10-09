@@ -1,0 +1,48 @@
+const fs = require('fs');
+const path = require('path');
+
+const outDir = path.join(__dirname, '..', 'dist');
+const filePath = path.join(outDir, '404.html');
+
+const projectBase = '/codespaces-react-1'; // adjust if your repo name or homepage path changes
+
+const html = `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Redirecting...</title>
+    <script>
+      // Redirect unknown routes back to the SPA root using a hash so the client app can handle routing
+      (function() {
+        try {
+          var base = '${projectBase}';
+          var path = location.pathname + location.search + location.hash;
+          // Remove trailing slash from base if present
+          if (base.endsWith('/')) base = base.slice(0, -1);
+          // If the current path already points at the base root, just go to index
+          if (path === base || path === base + '/' || path === '/') {
+            location.replace(base + '/');
+            return;
+          }
+          // Remove base from path if present
+          if (path.indexOf(base) === 0) path = path.slice(base.length);
+          // Ensure we have a leading slash
+          if (path.charAt(0) !== '/') path = '/' + path;
+          location.replace(base + '/#' + path);
+        } catch (e) {
+          // fallback: go to root
+          location.replace('${projectBase}/');
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <p>Redirecting to the application...</p>
+  </body>
+</html>`;
+
+fs.mkdirSync(outDir, { recursive: true });
+fs.writeFileSync(filePath, html, 'utf8');
+console.log('✅ Wrote', filePath);
