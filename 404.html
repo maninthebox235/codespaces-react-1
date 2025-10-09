@@ -1,36 +1,36 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" href="/codespaces-react-1/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="Web site created using @vitejs/plugin-react"
-    />
-    <link rel="apple-touch-icon" href="/codespaces-react-1/logo192.png" />
-    <!--
-      manifest.json provides metadata used when your web app is installed on a
-      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
-    -->
-    <link rel="manifest" href="/codespaces-react-1/manifest.json" />
-    <title>React App</title>
-    <script type="module" crossorigin src="/codespaces-react-1/assets/index-B6iP4Vs3.js"></script>
-    <link rel="stylesheet" crossorigin href="/codespaces-react-1/assets/index-BjYVUjox.css">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Redirecting...</title>
+    <script>
+      // Redirect unknown routes back to the SPA root using a hash so the client app can handle routing
+      (function() {
+        try {
+          var base = '/codespaces-react-1';
+          var path = location.pathname + location.search + location.hash;
+          // Remove trailing slash from base if present
+          if (base.endsWith('/')) base = base.slice(0, -1);
+          // If the current path already points at the base root, just go to index
+          if (path === base || path === base + '/' || path === '/') {
+            location.replace(base + '/');
+            return;
+          }
+          // Remove base from path if present
+          if (path.indexOf(base) === 0) path = path.slice(base.length);
+          // Ensure we have a leading slash
+          if (path.charAt(0) !== '/') path = '/' + path;
+          location.replace(base + '/#' + path);
+        } catch (e) {
+          // fallback: go to root
+          location.replace('/codespaces-react-1/');
+        }
+      })();
+    </script>
   </head>
   <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
-    <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
-
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
-
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
+    <p>Redirecting to the application...</p>
   </body>
 </html>
