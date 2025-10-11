@@ -145,16 +145,14 @@ function App() {
         </div>
 
         <div className="content-section active">
-          <HashRouter>
-            <AppRoutes 
-              appData={appData}
-              onAddPlayer={handleAddPlayer}
-              onDeletePlayer={handleDeletePlayer}
-              onSaveAssessment={handleSaveAssessment}
-              onImportData={handleImportData}
-              onClearData={handleClearData}
-            />
-          </HashRouter>
+          <AppRoutes 
+            appData={appData}
+            onAddPlayer={handleAddPlayer}
+            onDeletePlayer={handleDeletePlayer}
+            onSaveAssessment={handleSaveAssessment}
+            onImportData={handleImportData}
+            onClearData={handleClearData}
+          />
         </div>
       </div>
     </div>
