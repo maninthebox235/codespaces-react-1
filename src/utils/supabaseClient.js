@@ -17,17 +17,24 @@ export const getPlayers = async () => {
 };
 
 export const savePlayer = async (player) => {
+  // If player has an id, update existing. Otherwise, insert new (Supabase will auto-generate UUID)
+  const playerData = {
+    name: player.name,
+    age_group: player.age_group || player.age, // Support both field names for compatibility
+    position: player.position
+  };
+
+  // Only include id if updating an existing player (id will be a UUID from database)
+  if (player.id && player.id.includes('-')) {
+    playerData.id = player.id;
+  }
+
   const { data, error } = await supabase
     .from('players')
-    .upsert({
-      id: player.id,
-      name: player.name,
-      age_group: player.age,
-      position: player.position
-    })
+    .upsert(playerData)
     .select()
     .single();
-  
+
   if (error) throw error;
   return data;
 };
@@ -53,20 +60,29 @@ export const getAssessments = async () => {
 };
 
 export const saveAssessment = async (assessment) => {
+  // Build assessment data without id for new assessments
+  const assessmentData = {
+    player_id: assessment.playerId,
+    date: assessment.date,
+    season: assessment.season,
+    type: assessment.type,
+    assessor: assessment.assessor,
+    metrics: assessment.metrics || {},
+    notes: assessment.notes || {},
+    skill_ratings: assessment.skill_ratings || {}
+  };
+
+  // Only include id if updating an existing assessment (id will be a UUID from database)
+  if (assessment.id && assessment.id.includes('-')) {
+    assessmentData.id = assessment.id;
+  }
+
   const { data, error } = await supabase
     .from('assessments')
-    .upsert({
-      id: assessment.id,
-      player_id: assessment.playerId,
-      date: assessment.date,
-      type: assessment.type,
-      assessor: assessment.assessor,
-      metrics: assessment.metrics,
-      notes: assessment.notes
-    })
+    .upsert(assessmentData)
     .select()
     .single();
-  
+
   if (error) throw error;
   return data;
 };

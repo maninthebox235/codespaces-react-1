@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
-import { Routes, Route, Link, useLocation } from 'react-router-dom';
+import { useState, useEffect, lazy, Suspense } from 'react';
+import { Routes, Route, Link } from 'react-router-dom';
 import './App.css';
 import Dashboard from './components/Dashboard';
 import PlayerManagement from './components/PlayerManagement';
 import NewAssessment from './components/NewAssessment';
-import Reports from './components/Reports';
-import ExportData from './components/ExportData';
+// Lazy load Reports since it includes Chart.js (large dependency)
+const Reports = lazy(() => import('./components/Reports'));
+const ExportData = lazy(() => import('./components/ExportData'));
 import { 
   getPlayers, 
   getAssessments, 
@@ -24,11 +25,15 @@ function App() {
     players: [],
     assessments: []
   });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Load data from Supabase on mount
   useEffect(() => {
     const loadData = async () => {
       try {
+        setLoading(true);
+        setError(null);
         const [players, assessments] = await Promise.all([
           getPlayers(),
           getAssessments()
@@ -36,7 +41,9 @@ function App() {
         setAppData({ players, assessments });
       } catch (error) {
         console.error('Error loading data:', error);
-        alert('Error loading data. Please check your connection.');
+        setError('Failed to load data. Please check your connection and try refreshing the page.');
+      } finally {
+        setLoading(false);
       }
     };
     loadData();
@@ -96,12 +103,15 @@ function App() {
 
   const handleSaveAssessment = async (assessment) => {
     try {
+      console.log('Attempting to save assessment:', assessment);
       await saveAssessment(assessment);
       setActiveTab('dashboard');
+      alert('Assessment saved successfully!');
       // Data will be updated via real-time subscription
     } catch (error) {
       console.error('Error saving assessment:', error);
-      alert('Failed to save assessment. Please try again.');
+      console.error('Error details:', error.message, error.details);
+      alert(`Failed to save assessment: ${error.message || 'Unknown error'}. Check console for details.`);
     }
   };
 
@@ -128,6 +138,38 @@ function App() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="App">
+        <div className="container">
+          <div className="header">
+            <h1>🏒 Hockey Baseline Development Tracker</h1>
+            <p>Loading data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="App">
+        <div className="container">
+          <div className="header">
+            <h1>🏒 Hockey Baseline Development Tracker</h1>
+          </div>
+          <div className="empty-state" style={{ marginTop: '40px', color: '#e53e3e' }}>
+            <h3>Error Loading Data</h3>
+            <p>{error}</p>
+            <button className="btn" onClick={() => window.location.reload()}>
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="App">
       <div className="container">
@@ -145,7 +187,7 @@ function App() {
         </div>
 
         <div className="content-section active">
-          <AppRoutes 
+          <AppRoutes
             appData={appData}
             onAddPlayer={handleAddPlayer}
             onDeletePlayer={handleDeletePlayer}
@@ -163,14 +205,16 @@ export default App;
 
 function AppRoutes({ appData, onAddPlayer, onDeletePlayer, onSaveAssessment, onImportData, onClearData }) {
   return (
-    <Routes>
-      <Route path="/" element={<Dashboard players={appData.players} assessments={appData.assessments} />} />
-      <Route path="/players" element={<PlayerManagement players={appData.players} onAddPlayer={onAddPlayer} onDeletePlayer={onDeletePlayer} />} />
-      <Route path="/assess" element={<NewAssessment players={appData.players} onSaveAssessment={onSaveAssessment} />} />
-      <Route path="/reports" element={<Reports players={appData.players} assessments={appData.assessments} />} />
-      <Route path="/export" element={<ExportData onImport={onImportData} onClear={onClearData} />} />
-      {/* Catch-all route to redirect to dashboard */}
-      <Route path="*" element={<Dashboard players={appData.players} assessments={appData.assessments} />} />
-    </Routes>
+    <Suspense fallback={<div style={{ padding: '20px', textAlign: 'center' }}>Loading...</div>}>
+      <Routes>
+        <Route path="/" element={<Dashboard players={appData.players} assessments={appData.assessments} />} />
+        <Route path="/players" element={<PlayerManagement players={appData.players} onAddPlayer={onAddPlayer} onDeletePlayer={onDeletePlayer} />} />
+        <Route path="/assess" element={<NewAssessment players={appData.players} onSaveAssessment={onSaveAssessment} />} />
+        <Route path="/reports" element={<Reports players={appData.players} assessments={appData.assessments} />} />
+        <Route path="/export" element={<ExportData appData={appData} onImport={onImportData} onClear={onClearData} />} />
+        {/* Catch-all route to redirect to dashboard */}
+        <Route path="*" element={<Dashboard players={appData.players} assessments={appData.assessments} />} />
+      </Routes>
+    </Suspense>
   );
 }

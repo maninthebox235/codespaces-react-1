@@ -35,7 +35,7 @@ const getRandomColor = () => {
   return colors[Math.floor(Math.random() * colors.length)];
 };
 
-const PlayerProgress = ({ playerId, assessments, players }) => {
+const PlayerProgress = ({ playerId, assessments, selectedSeason = 'all', players }) => {
   const [chartData, setChartData] = useState(null);
   const [player, setPlayer] = useState(null);
 
@@ -43,13 +43,18 @@ const PlayerProgress = ({ playerId, assessments, players }) => {
     const currentPlayer = players.find(p => p.id === playerId);
     setPlayer(currentPlayer);
 
-    const playerAssessments = assessments
+    let playerAssessments = assessments
       .filter(a => a.player_id === playerId)
       .sort((a, b) => new Date(a.date) - new Date(b.date));
 
+    // Filter by season if not "all"
+    if (selectedSeason !== 'all') {
+      playerAssessments = playerAssessments.filter(a => a.season === selectedSeason);
+    }
+
     const datasets = generateDatasets(playerAssessments);
     setChartData(datasets);
-  }, [playerId, assessments, players]);
+  }, [playerId, assessments, selectedSeason, players]);
 
   const generateDatasets = (playerAssessments) => {
     if (!playerAssessments.length) return null;
@@ -75,11 +80,15 @@ const PlayerProgress = ({ playerId, assessments, players }) => {
   if (!player) return <div>No player selected</div>;
   if (!chartData) return <div>No assessment data available for {player.name}</div>;
 
+  const chartTitle = selectedSeason === 'all'
+    ? 'Skill Development Over Time'
+    : `Skill Development - ${selectedSeason} Season`;
+
   return (
     <div className="player-progress">
-      <h3>{player.name}'s Progress</h3>
+      <h3>{player.name}'s Progress {selectedSeason !== 'all' && `(${selectedSeason})`}</h3>
       <p>Position: {player.position} | Age Group: {player.age_group}</p>
-      
+
       <div style={{ height: '400px', marginTop: '20px' }}>
         <Line
           data={chartData}
@@ -105,7 +114,7 @@ const PlayerProgress = ({ playerId, assessments, players }) => {
             plugins: {
               title: {
                 display: true,
-                text: 'Skill Development Over Time',
+                text: chartTitle,
                 font: {
                   size: 16
                 }

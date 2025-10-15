@@ -79,4 +79,3 @@ To use it securely, add the following repository secrets in GitHub: Settings →
 - `VITE_SUPABASE_ANON_KEY` — your Supabase anon/public key
 
 After setting these secrets, push to `main` or trigger the workflow from the Actions tab. The workflow will build with the secrets as env vars and publish the resulting `dist` to the `gh-pages` branch.
-

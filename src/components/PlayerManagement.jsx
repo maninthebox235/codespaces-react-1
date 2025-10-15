@@ -13,11 +13,9 @@ const PlayerManagement = ({ players, onAddPlayer, onDeletePlayer }) => {
     }
 
     const newPlayer = {
-      id: Date.now().toString(),
       name: playerName,
-      age: playerAge,
-      position: playerPosition,
-      createdDate: new Date().toISOString()
+      age_group: playerAge,
+      position: playerPosition
     };
 
     onAddPlayer(newPlayer);
@@ -80,8 +78,8 @@ const PlayerManagement = ({ players, onAddPlayer, onDeletePlayer }) => {
           players.map(player => (
             <div key={player.id} className="player-card">
               <h3>{player.name}</h3>
-              <p><strong>Age Group:</strong> {player.age} | <strong>Position:</strong> {player.position}</p>
-              <button 
+              <p><strong>Age Group:</strong> {player.age_group} | <strong>Position:</strong> {player.position}</p>
+              <button
                 className="btn btn-danger"
                 onClick={() => onDeletePlayer(player.id)}
               >
